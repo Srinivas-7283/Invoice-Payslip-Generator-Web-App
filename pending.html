@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Approval - Invoice & Payslip Generator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card fade-in">
+            <div class="card-header text-center bg-warning text-dark">
+                <h4 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Pending Admin Approval
+                </h4>
+            </div>
+            <div class="card-body text-center p-5">
+                <div class="mb-4">
+                    <div class="spinner-border text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3">Your login is being reviewed</h5>
+                <p class="text-muted">Please wait while an administrator approves your login request. This page will automatically update once approved.</p>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This is a security measure to ensure authorized access to the system.
+                </div>
+                
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Poll for approval every 3 seconds
+setInterval(function() {
+    fetch('/issue/{{ session_id }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'approved') {
+            window.location.href = data.redirect;
+        }
+    })
+    .catch(error => {
+        console.log('Polling for approval...');
+    });
+}, 3000);
+</script>
+{% endblock %}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{ invoice.number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+        }
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 5px;
+        }
+        .invoice-title {
+            font-size: 24px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .invoice-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .invoice-info-left, .invoice-info-right {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+        .invoice-info-right {
+            text-align: right;
+        }
+        .invoice-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .client-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .client-info h3 {
+            margin-top: 0;
+            color: #2563eb;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .items-table th {
+            background-color: #2563eb;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        .items-table td {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .totals {
+            width: 300px;
+            margin-left: auto;
+            margin-top: 20px;
+        }
+        .totals table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .total-final {
+            font-weight: bold;
+            font-size: 18px;
+            background-color: #2563eb;
+            color: white;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        .status-pending { background-color: #fbbf24; }
+        .status-paid { background-color: #10b981; }
+        .status-overdue { background-color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">Invoice & Payslip Generator</div>
+        <div class="invoice-title">INVOICE</div>
+    </div>
+
+    <div class="invoice-info">
+        <div class="invoice-info-left">
+            <div class="client-info">
+                <h3>Bill To:</h3>
+                <strong>{{ invoice.client_name }}</strong>
+            </div>
+        </div>
+        <div class="invoice-info-right">
+            <div class="invoice-number">Invoice #: {{ invoice.number }}</div>
+            <div>Date: {{ invoice.created_at.strftime('%B %d, %Y') }}</div>
+            <div>Due Date: {{ invoice.due_date.strftime('%B %d, %Y') }}</div>
+            <div style="margin-top: 10px;">
+                Status: <span class="status-badge status-{{ invoice.status.lower() }}">{{ invoice.status }}</span>
+            </div>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Tax Rate</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items_json %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">${{ "%.2f"|format(item.price) }}</td>
+                <td class="text-right">{{ "%.1f"|format(item.tax_rate) }}%</td>
+                <td class="text-right">${{ "%.2f"|format(item.total) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td>Subtotal:</td>
+                <td class="text-right">${{ "%.2f"|format(invoice.subtotal) }}</td>
+            </tr>
+            <tr>
+                <td>Tax:</td>
+                <td class="text-right">${{ "%.2f"|format(invoice.tax) }}</td>
+            </tr>
+            <tr class="total-final">
+                <td>Total:</td>
+                <td class="text-right">${{ "%.2f"|format(invoice.total) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>Generated on {{ invoice.created_at.strftime('%B %d, %Y') }} | Invoice & Payslip Generator</p>
+    </div>
+</body>
+</html>

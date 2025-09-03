@@ -1,0 +1,271 @@
+<!-- templates/payslips.html -->
+{% extends "base.html" %}
+
+{% block title %}Payslips - Invoice & Payslip Generator{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">
+            <i class="fas fa-money-check-alt me-2"></i>Payslip Management
+        </h2>
+    </div>
+</div>
+
+<!-- Create Payslip Form - Show for admin/hr roles -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus me-2"></i>Generate New Payslip
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="payslipForm">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="employee_id" class="form-label">
+                                <i class="fas fa-user me-1"></i>Employee
+                            </label>
+                            <select class="form-select" id="employee_id" name="employee_id" required>
+                                <option value="">Select Employee</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}">{{ employee.name }} ({{ employee.designation }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="month" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Month
+                            </label>
+                            <select class="form-select" id="month" name="month" required>
+                                {% for i in range(1, 13) %}
+                                <option value="{{ i }}">
+                                    {{ ['January', 'February', 'March', 'April', 'May', 'June',
+                                        'July', 'August', 'September', 'October', 'November', 'December'][i-1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="year" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>Year
+                            </label>
+                            <input type="number" class="form-control" id="year" name="year" value="2024" min="2020" max="2030" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-plus-circle me-2"></i>Earnings
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="earningsSection">
+                                        <div class="earning-item mb-3">
+                                            <div class="row">
+                                                <div class="col-8">
+                                                    <input type="text" class="form-control" name="earning_name[]" placeholder="Earning type (e.g., Basic Salary)" required>
+                                                </div>
+                                                <div class="col-4">
+                                                    <input type="number" class="form-control earning-amount" name="earning_amount[]" placeholder="Amount" step="0.01" min="0" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-success btn-sm" onclick="addEarning()">
+                                        <i class="fas fa-plus me-1"></i>Add Earning
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-minus-circle me-2"></i>Deductions
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="deductionsSection">
+                                        <div class="deduction-item mb-3">
+                                            <div class="row">
+                                                <div class="col-8">
+                                                    <input type="text" class="form-control" name="deduction_name[]" placeholder="Deduction type (e.g., Tax)">
+                                                </div>
+                                                <div class="col-4">
+                                                    <input type="number" class="form-control deduction-amount" name="deduction_amount[]" placeholder="Amount" step="0.01" min="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="addDeduction()">
+                                        <i class="fas fa-plus me-1"></i>Add Deduction
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-8">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Generate Payslip
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Earnings:</span>
+                                        <span id="totalEarnings">$0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Deductions:</span>
+                                        <span id="totalDeductions">$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Net Pay:</span>
+                                        <span id="netPay">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payslip List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Payslips
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if payslips %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Period</th>
+                                    <th>Net Pay</th>
+                                    <th>Generated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payslip in payslips %}
+                                <tr>
+                                    <td>{{ payslip.employee.name }}</td>
+                                    <td>{{ ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][payslip.month] }} {{ payslip.year }}</td>
+                                    <td class="fw-bold text-success">${{ "%.2f"|format(payslip.net_pay) }}</td>
+                                    <td>{{ payslip.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('payslip_pdf', payslip_id=payslip.id) }}" class="btn btn-outline-primary" target="_blank">
+                                                <i class="fas fa-file-pdf me-1"></i>PDF
+                                            </a>
+                                            <a href="{{ url_for('generate_money_meme') }}?net_pay={{ payslip.net_pay }}" class="btn btn-outline-info" target="_blank">
+                                                <i class="fas fa-smile me-1"></i>Meme
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-money-check-alt fa-3x mb-3"></i>
+                        <p>No payslips generated yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addEarning() {
+    const earningHtml = `
+        <div class="earning-item mb-3">
+            <div class="row">
+                <div class="col-8">
+                    <input type="text" class="form-control" name="earning_name[]" placeholder="Earning type" required>
+                </div>
+                <div class="col-4">
+                    <input type="number" class="form-control earning-amount" name="earning_amount[]" placeholder="Amount" step="0.01" min="0" required>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('earningsSection').insertAdjacentHTML('beforeend', earningHtml);
+    attachPayslipListeners();
+}
+
+function addDeduction() {
+    const deductionHtml = `
+        <div class="deduction-item mb-3">
+            <div class="row">
+                <div class="col-8">
+                    <input type="text" class="form-control" name="deduction_name[]" placeholder="Deduction type">
+                </div>
+                <div class="col-4">
+                    <input type="number" class="form-control deduction-amount" name="deduction_amount[]" placeholder="Amount" step="0.01" min="0">
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('deductionsSection').insertAdjacentHTML('beforeend', deductionHtml);
+    attachPayslipListeners();
+}
+
+function calculatePayslip() {
+    let totalEarnings = 0;
+    let totalDeductions = 0;
+    
+    document.querySelectorAll('.earning-amount').forEach(input => {
+        totalEarnings += parseFloat(input.value) || 0;
+    });
+    
+    document.querySelectorAll('.deduction-amount').forEach(input => {
+        totalDeductions += parseFloat(input.value) || 0;
+    });
+    
+    const netPay = totalEarnings - totalDeductions;
+    
+    document.getElementById('totalEarnings').textContent = '$' + totalEarnings.toFixed(2);
+    document.getElementById('totalDeductions').textContent = '$' + totalDeductions.toFixed(2);
+    document.getElementById('netPay').textContent = '$' + netPay.toFixed(2);
+}
+
+function attachPayslipListeners() {
+    document.querySelectorAll('.earning-amount, .deduction-amount').forEach(input => {
+        input.addEventListener('input', calculatePayslip);
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    attachPayslipListeners();
+});
+</script>
+{% endblock %}

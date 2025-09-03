@@ -1,0 +1,244 @@
+
+<!-- templates/invoices.html -->
+{% extends "base.html" %}
+
+{% block title %}Invoices - Invoice & Payslip Generator{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">
+            <i class="fas fa-file-invoice-dollar me-2"></i>Invoice Management
+        </h2>
+    </div>
+</div>
+
+<!-- Create Invoice Form -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus me-2"></i>Create New Invoice
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="invoiceForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="client_name" class="form-label">
+                                <i class="fas fa-user me-1"></i>Client Name
+                            </label>
+                            <input type="text" class="form-control" id="client_name" name="client_name" required placeholder="Enter client name">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="due_date" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Due Date
+                            </label>
+                            <input type="date" class="form-control" id="due_date" name="due_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-list me-1"></i>Invoice Items
+                        </label>
+                        <div id="invoiceItems">
+                            <div class="invoice-item border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <input type="text" class="form-control" name="description[]" placeholder="Item description" required>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <input type="number" class="form-control quantity" name="quantity[]" placeholder="Qty" step="1" min="1" required>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <input type="number" class="form-control price" name="price[]" placeholder="Price" step="0.01" min="0" required>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <input type="number" class="form-control tax" name="tax[]" placeholder="Tax %" step="0.01" min="0" value="0">
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <button type="button" class="btn btn-danger w-100 remove-item" onclick="removeItem(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-outline-primary" onclick="addItem()">
+                            <i class="fas fa-plus me-2"></i>Add Item
+                        </button>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Invoice
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotal">$0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Tax:</span>
+                                        <span id="totalTax">$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total:</span>
+                                        <span id="grandTotal">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoice List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>All Invoices
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if invoices %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Client</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Due Date</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr>
+                                    <td><strong>{{ invoice.number }}</strong></td>
+                                    <td>{{ invoice.client_name }}</td>
+                                    <td>${{ "%.2f"|format(invoice.total) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if invoice.status == 'Paid' else 'danger' if invoice.status == 'Overdue' else 'warning' }}">
+                                            {{ invoice.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ invoice.due_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ invoice.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('invoice_pdf', invoice_id=invoice.id) }}" class="btn btn-outline-primary" target="_blank">
+                                                <i class="fas fa-file-pdf me-1"></i>PDF
+                                            </a>
+                                            <a href="{{ url_for('generate_money_meme') }}?net_pay={{ invoice.total }}" class="btn btn-outline-info" target="_blank">
+                                                <i class="fas fa-smile me-1"></i>Meme
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-file-invoice fa-3x mb-3"></i>
+                        <p>No invoices created yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addItem() {
+    const itemHtml = `
+        <div class="invoice-item border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <input type="text" class="form-control" name="description[]" placeholder="Item description" required>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <input type="number" class="form-control quantity" name="quantity[]" placeholder="Qty" step="1" min="1" required>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <input type="number" class="form-control price" name="price[]" placeholder="Price" step="0.01" min="0" required>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <input type="number" class="form-control tax" name="tax[]" placeholder="Tax %" step="0.01" min="0" value="0">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <button type="button" class="btn btn-danger w-100 remove-item" onclick="removeItem(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('invoiceItems').insertAdjacentHTML('beforeend', itemHtml);
+    attachCalculationListeners();
+}
+
+function removeItem(button) {
+    button.closest('.invoice-item').remove();
+    calculateTotal();
+}
+
+function calculateTotal() {
+    let subtotal = 0;
+    let totalTax = 0;
+    
+    document.querySelectorAll('.invoice-item').forEach(item => {
+        const quantity = parseFloat(item.querySelector('.quantity').value) || 0;
+        const price = parseFloat(item.querySelector('.price').value) || 0;
+        const taxRate = parseFloat(item.querySelector('.tax').value) || 0;
+        
+        const lineTotal = quantity * price;
+        const lineTax = lineTotal * (taxRate / 100);
+        
+        subtotal += lineTotal;
+        totalTax += lineTax;
+    });
+    
+    document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('totalTax').textContent = '$' + totalTax.toFixed(2);
+    document.getElementById('grandTotal').textContent = '$' + (subtotal + totalTax).toFixed(2);
+}
+
+function attachCalculationListeners() {
+    document.querySelectorAll('.quantity, .price, .tax').forEach(input => {
+        input.addEventListener('input', calculateTotal);
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    attachCalculationListeners();
+    
+    // Set default due date to 30 days from now
+    const today = new Date();
+    const futureDate = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
+    document.getElementById('due_date').value = futureDate.toISOString().split('T')[0];
+});
+</script>
+{% endblock %}

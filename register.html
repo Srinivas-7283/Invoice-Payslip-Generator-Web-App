@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Invoice & Payslip Generator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card fade-in">
+            <div class="card-header text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Create New Account
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" id="registrationForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-user me-1"></i>Full Name
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="Enter your full name">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">
+                            <i class="fas fa-user-tag me-1"></i>Role
+                        </label>
+                        <select class="form-select" id="role" name="role" required onchange="toggleRoleFields()">
+                            <option value="">Choose your role...</option>
+                            <option value="hr">HR Manager</option>
+                            <option value="employee">Employee</option>
+                            <option value="client">Client</option>
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>Admin accounts cannot be created through registration
+                        </div>
+                    </div>
+                    
+                    <div id="employeeFields" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="department" class="form-label">
+                                    <i class="fas fa-building me-1"></i>Department
+                                </label>
+                                <input type="text" class="form-control" id="department" name="department" placeholder="e.g., IT, Finance, HR">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="designation" class="form-label">
+                                    <i class="fas fa-id-badge me-1"></i>Designation
+                                </label>
+                                <input type="text" class="form-control" id="designation" name="designation" placeholder="e.g., Developer, Manager">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="salaryField" style="display: none;">
+                            <label for="base_salary" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Base Salary
+                            </label>
+                            <input type="number" class="form-control" id="base_salary" name="base_salary" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Password
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" required placeholder="Create a password">
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <label for="confirm_password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Confirm Password
+                            </label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required placeholder="Confirm your password">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-user-plus me-2"></i>Register Account
+                    </button>
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Already have an account? 
+                            <a href="{{ url_for('login') }}" class="text-decoration-none">Login here</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3 glass-effect">
+            <div class="card-body text-center text-white">
+                <small>
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Your registration will be reviewed by an administrator before activation
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRoleFields() {
+    const role = document.getElementById('role').value;
+    const employeeFields = document.getElementById('employeeFields');
+    const salaryField = document.getElementById('salaryField');
+    
+    if (role === 'hr' || role === 'employee') {
+        employeeFields.style.display = 'block';
+        if (role === 'employee') {
+            salaryField.style.display = 'block';
+        } else {
+            salaryField.style.display = 'none';
+        }
+    } else {
+        employeeFields.style.display = 'none';
+        salaryField.style.display = 'none';
+    }
+}
+
+document.getElementById('registrationForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Passwords do not match!');
+    }
+});
+</script>
+{% endblock %}

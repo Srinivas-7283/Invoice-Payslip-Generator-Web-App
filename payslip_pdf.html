@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip - {{ payslip.employee.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #059669;
+            padding-bottom: 20px;
+        }
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 5px;
+        }
+        .payslip-title {
+            font-size: 24px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .employee-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .employee-info-left, .employee-info-right {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+        .employee-details {
+            background-color: #f0fdf4;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #059669;
+        }
+        .employee-details h3 {
+            margin-top: 0;
+            color: #059669;
+        }
+        .payslip-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: right;
+        }
+        .earnings-deductions {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .earnings-section, .deductions-section {
+            display: table-cell;
+            width: 48%;
+            vertical-align: top;
+        }
+        .deductions-section {
+            padding-left: 4%;
+        }
+        .section-header {
+            background-color: #059669;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+        .deductions-section .section-header {
+            background-color: #dc2626;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .items-table td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .summary {
+            background-color: #f0fdf4;
+            border: 2px solid #059669;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid #d1fae5;
+        }
+        .net-pay {
+            font-size: 24px;
+            font-weight: bold;
+            color: #059669;
+            border-top: 3px solid #059669;
+            padding-top: 10px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">Invoice & Payslip Generator</div>
+        <div class="payslip-title">PAYSLIP</div>
+    </div>
+
+    <div class="employee-info">
+        <div class="employee-info-left">
+            <div class="employee-details">
+                <h3>Employee Details</h3>
+                <strong>Name:</strong> {{ payslip.employee.name }}<br>
+                <strong>Email:</strong> {{ payslip.employee.email }}<br>
+                <strong>Department:</strong> {{ payslip.employee.department }}<br>
+                <strong>Designation:</strong> {{ payslip.employee.designation }}
+            </div>
+        </div>
+        <div class="employee-info-right">
+            <div class="payslip-info">
+                <strong>Pay Period:</strong><br>
+                {{ ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][payslip.month] }} {{ payslip.year }}<br><br>
+                <strong>Generated:</strong><br>
+                {{ payslip.created_at.strftime('%B %d, %Y') }}
+            </div>
+        </div>
+    </div>
+
+    <div class="earnings-deductions">
+        <div class="earnings-section">
+            <div class="section-header">EARNINGS</div>
+            <table class="items-table">
+                {% for earning in payslip.earnings_json %}
+                <tr>
+                    <td>{{ earning.name }}</td>
+                    <td class="text-right">${{ "%.2f"|format(earning.amount) }}</td>
+                </tr>
+                {% endfor %}
+                <tr style="background-color: #d1fae5; font-weight: bold;">
+                    <td>Total Earnings</td>
+                    <td class="text-right">${{ "%.2f"|format(payslip.earnings_json|sum(attribute='amount')) }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="deductions-section">
+            <div class="section-header">DEDUCTIONS</div>
+            <table class="items-table">
+                {% for deduction in payslip.deductions_json %}
+                <tr>
+                    <td>{{ deduction.name }}</td>
+                    <td class="text-right">${{ "%.2f"|format(deduction.amount) }}</td>
+                </tr>
+                {% endfor %}
+                <tr style="background-color: #fecaca; font-weight: bold;">
+                    <td>Total Deductions</td>
+                    <td class="text-right">${{ "%.2f"|format(payslip.deductions_json|sum(attribute='amount')) }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="summary">
+        <table class="summary-table">
+            <tr>
+                <td><strong>Total Earnings:</strong></td>
+                <td class="text-right">${{ "%.2f"|format(payslip.earnings_json|sum(attribute='amount')) }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total Deductions:</strong></td>
+                <td class="text-right">${{ "%.2f"|format(payslip.deductions_json|sum(attribute='amount')) }}</td>
+            </tr>
+            <tr class="net-pay">
+                <td><strong>NET PAY:</strong></td>
+                <td class="text-right">${{ "%.2f"|format(payslip.net_pay) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>This is a computer-generated payslip and does not require a signature.</p>
+        <p>Generated on {{ payslip.created_at.strftime('%B %d, %Y') }} | Invoice & Payslip Generator</p>
+    </div>
+</body>
+</html>

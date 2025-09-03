@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Invoice & Payslip Generator{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white mb-3">
+            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+        </h2>
+        <p class="text-white-50">Welcome back, {{ user.email }}!</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    {% if user.role in ['admin', 'hr'] %}
+    <div class="col-md-4">
+        <div class="stats-card">
+            <h3>{{ stats.get('total_employees', 0) }}</h3>
+            <p class="mb-0"><i class="fas fa-users me-2"></i>Total Employees</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card">
+            <h3>{{ stats.get('total_invoices', 0) }}</h3>
+            <p class="mb-0"><i class="fas fa-file-invoice me-2"></i>Total Invoices</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card">
+            <h3>{{ stats.get('total_payslips', 0) }}</h3>
+            <p class="mb-0"><i class="fas fa-money-check-alt me-2"></i>Total Payslips</p>
+        </div>
+    </div>
+    {% elif user.role == 'employee' %}
+    <div class="col-md-6">
+        <div class="stats-card">
+            <h3>{{ stats.get('my_payslips', 0) }}</h3>
+            <p class="mb-0"><i class="fas fa-money-check-alt me-2"></i>My Payslips</p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stats-card">
+            <h3>{{ user.role.title() }}</h3>
+            <p class="mb-0"><i class="fas fa-user me-2"></i>Role</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    {% if user.role in ['admin', 'hr', 'employee'] %}
+    <div class="col-md-6">
+        <div class="card fade-in">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="fas fa-file-invoice-dollar fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Invoices</h5>
+                <p class="card-text">Create and manage professional invoices for your clients.</p>
+                <a href="{{ url_for('invoices') }}" class="btn btn-primary">
+                    <i class="fas fa-file-invoice me-2"></i>Manage Invoices
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card fade-in">
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <i class="fas fa-money-check-alt fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Payslips</h5>
+                <p class="card-text">
+                    {% if user.role == 'employee' %}
+                        View and download your payslips.
+                    {% else %}
+                        Generate and manage employee payslips.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('payslips') }}" class="btn btn-success">
+                    <i class="fas fa-money-check-alt me-2"></i>
+                    {% if user.role == 'employee' %}View Payslips{% else %}Manage Payslips{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
